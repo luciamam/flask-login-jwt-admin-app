@@ -1,5 +1,8 @@
 from flask import Flask ,render_template,request,redirect,url_for
 
+#para el hahsin de las contraseñas en la base datos 
+from werkzeug.security import generate_password_hash 
+
 #para usar mysql y os 
 from flask_mysqldb import   MySQL
 from dotenv import load_dotenv
@@ -75,9 +78,12 @@ def registro():
         email=request.form['email']
         password=request.form['password']
         #print(nombre,apellidos,email,password)
-        #creamos la conexion con la base de datos 
+
+        #****************encripatr una contraseña
+        #vamos a hashear la base de datos en que caso de ataque a mi base datos
+        hash_password=generate_password_hash(password,salt_length=16)
         cur=mysql.connection.cursor()
-        cur.execute('Insert into usuarios(nombre,apellidos,email,password) values (%s,%s,%s,%s)',(nombre,apellidos,email,password))
+        cur.execute('Insert into usuarios(nombre,apellidos,email,password) values (%s,%s,%s,%s)',(nombre,apellidos,email,hash_password))
         mysql.connection.commit()
 
         return redirect(url_for('perfil',nombre=nombre))
