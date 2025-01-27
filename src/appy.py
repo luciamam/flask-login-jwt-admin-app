@@ -1,7 +1,7 @@
 from flask import Flask ,render_template,request,redirect,url_for
 
 #para el hahsin de las contraseñas en la base datos 
-from werkzeug.security import generate_password_hash 
+from werkzeug.security import generate_password_hash ,check_password_hash
 
 #para usar mysql y os 
 from flask_mysqldb import   MySQL
@@ -44,27 +44,42 @@ def login():
         #para recoger datos del formaulario 
         if request.method=='POST':
             email=request.form['email']
-            password=request.form['password']
-            print(email,password) 
-
-            #siempre a la conexion  a la base de datos usar el try 
+            password_in=request.form['password']
+            ##voy conectar la base de datos 
             try:
                 cur=mysql.connection.cursor()
-                print("dentro del trai",email,password)
-                cur.execute('SELECT * FROM usuarios WHERE email=%s and password=%s',(email,password))
+                #hacemos una consulta  y asi obtenemos el usuaroio 
+                cur.execute('SELECT * FROM usuarios WHERE email=%s',(email,))
                 user=cur.fetchone()
-                #print("usuario",user[0])
-            
-                if user:
+
+                #siempre asegurarnos de que el usuario no sea NONE
+                if not user:
+                    return "no existe el usuario "
+                
+
+                #ahora vamos a recueperar la contraseña haseada del usuario 
+                hashed_password=user[4]
+
+                #condicion para saber si la contraña resupera hasheada es igual a la que se introduce ahora 
+                if check_password_hash(hashed_password,password_in):
                     return redirect(url_for('miperfil'))
                 else:
-                    return "usuario no valido "
-                
+                    return "constresña invalida"
+
             except Exception as e:
-                return f"ha ocurrido {e}"  
+                return "ha ocurrido un error, {}".format(e)
+            
+
+            finally:
+                cur.close()
+        
+
         else:
-            #no quiero salirme de la ruta 
-            return render_template('login.html')
+            return  render_template('login.html')
+
+
+
+
 
 
 
